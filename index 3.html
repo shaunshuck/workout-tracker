@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
+<title>Workout Tracker</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230E1116'/%3E%3Ctext x='50' y='62' font-size='50' text-anchor='middle' fill='%23C9A14A'%3E%F0%9F%8F%8B%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#0E1116" />
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+  html, body { background: #0E1116; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color: #E8EAED; padding-bottom: 90px; }
+  button { font-family: inherit; cursor: pointer; }
+  .header { position: sticky; top: 0; z-index: 10; background: #0E1116ee; backdrop-filter: blur(8px); border-bottom: 1px solid #1F2530; padding: 14px 18px 12px; }
+  .header-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .eyebrow { font-size: 11px; letter-spacing: 1.5px; color: #C9A14A; font-weight: 700; text-transform: uppercase; }
+  .title { font-size: 22px; font-weight: 800; margin-top: 2px; color: #fff; }
+  .subtitle { color: #7C8493; font-weight: 500; font-size: 16px; }
+  .all-days-btn { background: #1A1F29; border: 1px solid #2A3140; color: #C9A14A; border-radius: 10px; padding: 8px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+  .progress-track { margin-top: 12px; background: #1A1F29; border-radius: 999px; height: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg,#C9A14A,#E8C77A); transition: width .3s ease; }
+  .progress-label { font-size: 11px; color: #7C8493; margin-top: 6px; }
+  .focus-note { padding: 16px 18px 0; font-size: 13px; color: #9CA3AF; line-height: 1.5; font-style: italic; }
+  .section { padding: 18px 18px 0; }
+  .section-head { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; }
+  .section-icon { color: #C9A14A; }
+  .section-label { font-size: 13px; font-weight: 700; color: #F0F1F3; }
+  .section-sub { font-size: 12px; color: #5B6270; }
+  .warmup-text { font-size: 14.5px; color: #D1D5DB; line-height: 1.55; }
+  .stretch-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+  .stretch-list li { font-size: 14.5px; color: #D1D5DB; line-height: 1.4; }
+  .round-block { margin-bottom: 18px; }
+  .round-label { font-size: 12px; font-weight: 700; color: #C9A14A; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .ex-list { display: flex; flex-direction: column; gap: 8px; }
+  .ex-item { display: flex; align-items: flex-start; gap: 12px; background: #161A22; border: 1px solid #232A36; border-radius: 12px; padding: 12px 14px; text-align: left; transition: all .15s ease; width: 100%; }
+  .ex-item.checked { background: #16201A; border-color: #2D4A33; }
+  .ex-check { flex-shrink: 0; width: 22px; height: 22px; border-radius: 7px; margin-top: 1px; border: 1.5px solid #3A4150; display: flex; align-items: center; justify-content: center; }
+  .ex-item.checked .ex-check { background: #5FBF73; border-color: #5FBF73; }
+  .ex-check svg { display: none; }
+  .ex-item.checked .ex-check svg { display: block; }
+  .ex-body { flex: 1; min-width: 0; }
+  .ex-top { display: flex; justify-content: space-between; gap: 8px; }
+  .ex-name { font-size: 15px; font-weight: 600; color: #F0F1F3; }
+  .ex-item.checked .ex-name { color: #8FAE96; text-decoration: line-through; text-decoration-color: #5FBF7388; }
+  .ex-reps { font-size: 14px; font-weight: 700; color: #C9A14A; flex-shrink: 0; }
+  .ex-item.checked .ex-reps { color: #5FBF73; }
+  .ex-note { font-size: 12.5px; color: #7C8493; margin-top: 3px; line-height: 1.4; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #11151Cee; backdrop-filter: blur(10px); border-top: 1px solid #1F2530; padding: 12px 18px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 10px; }
+  .nav-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 13px 0; border-radius: 12px; font-size: 14px; font-weight: 700; background: #1A1F29; color: #E8EAED; border: 1px solid #2A3140; }
+  .nav-btn.primary { background: linear-gradient(135deg,#C9A14A,#B8893A); color: #0E1116; border: none; }
+  .nav-btn:disabled { background: #161A22; color: #3A4150; border-color: #1F2530; opacity:.5; }
+  .overlay { position: fixed; inset: 0; background: #0009; z-index: 20; display: none; align-items: flex-end; }
+  .overlay.open { display: flex; }
+  .sheet { background: #11151C; width: 100%; max-height: 80vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); border: 1px solid #232A36; border-bottom: none; }
+  .sheet-handle { width: 36px; height: 4px; background: #2A3140; border-radius: 99px; margin: 0 auto 16px; }
+  .sheet-title { font-size: 16px; font-weight: 800; margin-bottom: 14px; color: #fff; }
+  .week-block { margin-bottom: 14px; }
+  .week-label { font-size: 11px; font-weight: 700; color: #7C8493; letter-spacing: 1px; margin-bottom: 8px; }
+  .day-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .day-card { background: #161A22; border: 1px solid #232A36; border-radius: 10px; padding: 10px 12px; text-align: left; width: 100%; }
+  .day-card.current { background: #2A2410; border-color: #C9A14A; }
+  .day-card-label { font-size: 11px; color: #7C8493; font-weight: 700; }
+  .day-card.current .day-card-label { color: #C9A14A; }
+  .day-card-title { font-size: 13px; color: #E8EAED; font-weight: 600; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+
+const W = [
+  // ── WEEK 1 — Re-establish ───────────────────────────────────────────
+  {
+    id:"w1d1",week:1,dayNum:1,title:"Full Body Primer",subtitle:"Movement quality",
+    focus:"Week 1: come in ready to work. Pick weights that challenge you — rep 10 should be hard. Quality reps, not slow reps.",
+    warmup:"Incline treadmill walk (brisk, 8-12% incline) — 10 min. No running.",
+    stretches:["Cat-cow, 10 slow reps","World's greatest stretch, 5/side","Hip flexor lunge stretch, 30 sec/side","Standing quad stretch, 30 sec/side","Cross-body shoulder stretch (left gentle), 30 sec","Thread the needle, 5/side","Standing forward fold, 30-45 sec","Band shoulder dislocates or arm circles, 15 reps (left light)"],
+    rounds:[
+      [["Goblet squat","10","Slow tempo — 3 sec down. Bilateral, knee-friendly."],["Seated cable row","10","Squeeze at the back, controlled return. Easy on left shoulder."],["DB floor press","10","Floor limits ROM — safe left shoulder entry point."]],
+      [["Romanian deadlift (DB)","10","Hinge at hips, flat back, soft knees."],["Lat pulldown","10","Controlled pull, avoid yanking with left shoulder."],["Glute bridge","12","Drive through heels, squeeze at top, hold 1 sec."]],
+      [["Leg press (moderate)","10","Bilateral — primary knee-safe quad driver."],["Cable face pull","12","Light tension. External rotation emphasis."],["Dead bug","10/side","Slow and deliberate — lower back flat to floor throughout."]],
+    ],
+    ab:["Plank hold","30 sec","Neutral spine, squeeze everything, don't let hips sag."],
+  },
+  {
+    id:"w1d2",week:1,dayNum:2,title:"Upper Pull Focus",subtitle:"Back & biceps",
+    focus:"Pull movements dominate today. Load these up — back responds to weight. Left shoulder stays in safe range, but everything else goes hard.",
+    warmup:"Elliptical intervals — 1 min easy / 1 min push, alternate for 10 min.",
+    stretches:["Arm circles forward + back, 15 each","Banded external rotation (light, both arms), 15 reps","Wall slides, 10 slow reps","Cross-body shoulder stretch, 30 sec/side","Chest opener — hands clasped behind back, 30 sec","Seated spinal rotation, 5/side","Wrist circles + forearm stretch, 30 sec each","Child's pose, 45 sec"],
+    rounds:[
+      [["Assisted pull-up","8-10","Controlled, no kipping. Full hang to chin over bar."],["Single-arm DB row","10/side","Brace well, full range without twisting."],["Cable bicep curl","10","Full squeeze at top, slow return."]],
+      [["Seated cable row, close grip","10","Drive elbows back, pause at chest."],["Face pull","12","External rotation emphasis, light weight."],["Hammer curl","10","Neutral grip, no swinging."]],
+      [["Lat pulldown, wide grip","10","Chest up, pull to upper chest — not behind neck."],["Incline DB curl","10","Great stretch at bottom — control the eccentric."],["Band pull-apart","15","Straight arms, squeeze shoulder blades together."]],
+    ],
+    ab:["Side plank","25 sec/side","Stack feet or stagger. No hip drop."],
+  },
+  {
+    id:"w1d3",week:1,dayNum:3,title:"Posterior Chain",subtitle:"Glutes & hamstrings",
+    focus:"Hip hinge patterns today. Load the glutes and hamstrings — these are your biggest muscles, treat them that way. Flat back is the only rule.",
+    warmup:"Rowing machine, smooth pull — 10 min. Focus on the hip drive, not just arms.",
+    stretches:["Supine knee-to-chest pull, 30 sec/side","Lying hamstring stretch with strap or towel, 30 sec/side","Seated forward fold, 45 sec","Cobra stretch (gentle), 3 x 20 sec","Glute bridge hold, 3 x 20 sec","Hip flexor kneeling stretch, 30 sec/side","Thoracic extension over foam roller, 60 sec","Doorway pec stretch (low, easy on left), 20 sec/side"],
+    rounds:[
+      [["Hip thrust (machine or BB)","10","Bilateral — full hip extension and squeeze at top."],["Seated leg curl","10","Controlled both ways — slow return."],["Cable pull-through","12","Hinge and drive hips forward. Glute focus."]],
+      [["Single-leg Romanian deadlift (light)","8/side","Touch down gently on right leg — balance not load is the point."],["Glute bridge march","10/side","Slow alternating lifts from bridge position."],["Reverse hyper or back extension (light)","12","Lower back health. Not a heavy loading day."]],
+      [["Leg press, feet high","10","High foot placement shifts load to glutes and hamstrings."],["Standing cable kickback","10/side","Glute isolation — squeeze at full extension."],["Lying leg curl","10","Slow eccentric on the way down — that's where the work is."]],
+    ],
+    ab:["Bird dog","10/side","Extend opposite arm and leg, hold 2 sec each rep. Perfect form."],
+  },
+  {
+    id:"w1d4",week:1,dayNum:4,title:"Push Day",subtitle:"Chest, shoulders & triceps",
+    focus:"Pressing patterns today. Push the chest and triceps — left shoulder stays controlled but the rest of you doesn't hold back.",
+    warmup:"Stair stepper, steady pace — 10 min.",
+    stretches:["90/90 hip stretch, 30 sec/side","Pigeon stretch, 30-45 sec/side","Lying spinal twist, 30 sec/side","Doorway chest stretch (light), 30 sec","Calf stretch on wall, 30 sec/side","Child's pose with lateral reach, 45 sec","Standing side bend, 5/side","Neck rolls + shoulder rolls, 10 each way"],
+    rounds:[
+      [["Chest press machine","10","Machine path protects left shoulder. Full contraction at top."],["Cable chest fly","10","Soft elbows, stop before full stretch on left side."],["Triceps rope pushdown","10","Elbows tight to body, full extension."]],
+      [["Incline DB press (light-mod)","10","Stop a few inches off chest — protect the shoulder."],["Lateral raise (light DB)","12","Controlled arc, stop at shoulder height."],["Overhead triceps extension (DB, light)","10","Controlled range — stop if shoulder objects."]],
+      [["Push-up","10","Standard or incline if shoulder needs it today."],["DB front raise","10","Alternate arms. Controlled arc, no swinging."],["Bench dip (shallow 90 deg only)","10","Shallow range only — no deep dip that loads the shoulder."]],
+    ],
+    ab:["Pallof press","10/side","Anti-rotation — pause 2 sec at full extension."],
+  },
+
+  // ── WEEK 2 — Building ───────────────────────────────────────────────
+  {
+    id:"w2d1",week:2,dayNum:1,title:"Athletic Full Body",subtitle:"Power & coordination",
+    focus:"Week 2: push past week 1 weights on anything that felt comfortable. More complex patterns today — trust the fitness.",
+    warmup:"Incline treadmill walk + last 2 min stair stepper — 10 min total combo.",
+    stretches:["Walking knee hugs, 10 steps","Walking quad pulls, 10 steps","Leg swings front-to-back, 10/side","Leg swings side-to-side, 10/side","Hip circles, 10/direction","Inchworm walkout, 5 reps","Lat stretch on rack or pole, 30 sec/side","Seated figure-4 glute stretch, 30 sec/side"],
+    rounds:[
+      [["DB squat to press (light)","10","Squat, stand, press to ear level — fluid. Stop pressing overhead if shoulder objects."],["Bent-over DB row","10","Hinge, brace, pull — both arms simultaneously."],["Low box step-up, bodyweight","10/leg","Drive through the heel. Right knee tracking well throughout."]],
+      [["DB deadlift, moderate","10","Bilateral, crisp hinge — build the pattern toward week 3."],["Standing cable chest press","10","Both arms, stable base — shoulder-friendly press angle."],["Lateral band walk","12/side","Mini band above knees. Stay low, controlled."]],
+      [["Farmer's carry","40 sec","Moderate-heavy. Spine neutral, shoulders packed."],["TRX or ring row","10","Body at angle — pull chest to handles, lower slow."],["Goblet squat, slow tempo","10","4 sec down, 1 sec pause at bottom, drive up."]],
+    ],
+    ab:["Ab wheel rollout (from knees)","8-10","Go only as far as you can return without the back arching."],
+  },
+  {
+    id:"w2d2",week:2,dayNum:2,title:"Chest & Back Superset",subtitle:"Push-pull pairs",
+    focus:"Paired push-pull today — minimal rest between the two moves in each pair, then rest before the next. Keep the pace up, that's where the burn comes from.",
+    warmup:"Elliptical, moderate resistance, full stride — 10 min.",
+    stretches:["Cat-cow, 10 slow reps","World's greatest stretch, 5/side","Hip flexor lunge stretch, 30 sec/side","Standing quad stretch, 30 sec/side","Cross-body shoulder stretch (left gentle), 30 sec","Thread the needle, 5/side","Standing forward fold, 30-45 sec","Band shoulder dislocates or arm circles, 15 reps (left light)"],
+    rounds:[
+      [["Chest press machine","10","Then immediately into the row. Rest after both."],["Seated cable row","10","Push-pull pair. Full back squeeze."],["Cable fly + Face pull","10 each","Do fly, then face pull back to back. Left shoulder: light on fly."]],
+      [["Incline DB press","10","Then immediately single-arm row."],["Single-arm DB row","10/side","Alternate: press set, row set — back to back."],["Pec deck + Lat pulldown","10 each","Machine pair — isolation with shoulder safety."]],
+      [["Push-up","10","Standard or incline — what feels right."],["Band pull-apart","15","High rep upper back to finish."],["Triceps pushdown + Bicep curl","10 each","Arms superset — classic pairing to finish."]],
+    ],
+    ab:["Hollow body hold","20-25 sec","Lower back pressed to floor, arms and legs extended."],
+  },
+  {
+    id:"w2d3",week:2,dayNum:3,title:"Legs & Core",subtitle:"Knee-friendly lower body",
+    focus:"Bilateral leg work — load it up. Right knee stays bilateral and controlled, but the glutes and hamstrings get pushed hard today.",
+    warmup:"Rowing machine — 10 min. Drive with legs, not arms. Good warmup for today.",
+    stretches:["Supine knee-to-chest pull, 30 sec/side","Lying hamstring stretch with strap, 30 sec/side","Seated forward fold, 45 sec","Cobra stretch, 3 x 20 sec","Glute bridge hold, 3 x 20 sec","Hip flexor kneeling stretch, 30 sec/side","Thoracic extension over foam roller, 60 sec","Doorway pec stretch (low), 20 sec/side"],
+    rounds:[
+      [["Leg press, moderate weight","10","Controlled eccentric — 3 sec down, drive up."],["Hip thrust","12","Full extension, pause and squeeze 1 sec at top."],["Standing calf raise","15","Bilateral — slow up, slow down."]],
+      [["Goblet squat","10","Moderate weight. Box squat depth if knee is tight today."],["Seated leg curl","10","Both legs. Slow return is where the work happens."],["Cable hip abduction","10/side","Standing, controlled — knee health support."]],
+      [["Romanian deadlift","10","Hamstring stretch at bottom, drive hips forward."],["Glute bridge with band above knees","12","Band adds abductor challenge — knees push out."],["Wall sit","30 sec","Isometric quad hold — skip if right knee complains."]],
+    ],
+    ab:["Dead bug with DB pullover","8/side","Hold light DB overhead, extend opposite leg — slow and controlled."],
+  },
+  {
+    id:"w2d4",week:2,dayNum:4,title:"Arms & Shoulders",subtitle:"Isolation day",
+    focus:"Higher rep arms day — the pump is the point. Left shoulder on easy mode, everything else goes for volume. Enjoy it.",
+    warmup:"Stair stepper, steady pace — 10 min.",
+    stretches:["Arm circles forward + back, 15 each","Banded external rotation (light), 15 reps","Wall slides, 10 slow reps","Cross-body shoulder stretch, 30 sec/side","Chest opener — hands clasped behind back, 30 sec","Seated spinal rotation, 5/side","Wrist circles + forearm stretch, 30 sec each","Child's pose, 45 sec"],
+    rounds:[
+      [["DB bicep curl","12","Full range, supinate the wrist at top."],["Triceps rope pushdown","12","Squeeze at full extension."],["Lateral raise","12","Light — shoulder health, not load."]],
+      [["Hammer curl","10","Neutral grip, both arms, no swinging."],["Overhead triceps extension (DB, light)","10","Controlled — stop if shoulder pinches."],["Cable front raise","10","Both arms on cable, smooth arc up."]],
+      [["Concentration curl","10/side","Full isolation — elbow on inner thigh."],["Skull crusher (light EZ or DB)","10","Elbows in, controlled. Left arm: only as heavy as comfortable."],["Face pull","15","External rotation, light band — rotator cuff finish."]],
+    ],
+    ab:["Side plank with hip dip","10/side","Lower hip to floor and raise. Controlled, not fast."],
+  },
+
+  // ── WEEK 3 — Peak ───────────────────────────────────────────────────
+  {
+    id:"w3d1",week:3,dayNum:1,title:"Heavy Full Body",subtitle:"Peak week begins",
+    focus:"Week 3: best effort week. You've logged two weeks — you know what you can handle. Go heavier, same clean reps.",
+    warmup:"Incline treadmill walk (brisk, 8-12% incline) + last 2 min elliptical — 10 min combo.",
+    stretches:["Walking knee hugs, 10 steps","Walking quad pulls, 10 steps","Leg swings front-to-back, 10/side","Leg swings side-to-side, 10/side","Hip circles, 10/direction","Inchworm walkout, 5 reps","Lat stretch on rack, 30 sec/side","Seated figure-4 glute stretch, 30 sec/side"],
+    rounds:[
+      [["DB deadlift, heavy","8","Moderate-heavy. Flat back is non-negotiable."],["Weighted push-up or DB bench press","10","Add plate to push-up or use DBs on bench — best weight yet."],["Weighted pull-up or heavy lat pulldown","8","Add weight to pull-ups if they feel easy now."]],
+      [["Bulgarian split squat (light DB)","8/leg","Rear foot elevated. Right leg — watch knee depth, don't load heavy."],["Cable row, heavy","10","Drive elbows hard. Full squeeze. Best weight of the block."],["DB shoulder press (light-mod)","10","Stop at ear level. No overhead lockout if shoulder objects."]],
+      [["Leg press, heavier","10","Push the weight this week — controlled eccentric still."],["Hip thrust, heavier","10","Load up — most knee-friendly strength move you have."],["Farmer's carry, heavy","40 sec","Grip, core, traps — everything working at once."]],
+    ],
+    ab:["Ab wheel rollout","10","Full extension if back holds. Stop short if not — no compromise."],
+  },
+  {
+    id:"w3d2",week:3,dayNum:2,title:"Upper Body Strength",subtitle:"Chest & back heavy",
+    focus:"Peak week upper body. Compound movements, best weights of the block. Left shoulder controlled — everything else has no excuse.",
+    warmup:"Elliptical intervals — 1 min easy / 1 min push, alternate for 10 min.",
+    stretches:["Cat-cow, 10 reps","World's greatest stretch, 5/side","Hip flexor lunge stretch, 30 sec/side","Standing quad stretch, 30 sec/side","Cross-body shoulder stretch (left gentle), 30 sec","Thread the needle, 5/side","Standing forward fold, 30-45 sec","Banded shoulder dislocates, 15 reps (left light)"],
+    rounds:[
+      [["Incline DB press (heavier)","8","Best weight you've used so far — clean reps only."],["Bent-over DB row (heavy)","8","Hinge well, row hard. Best back weight of the block."],["Weighted bench dip or close-grip press","10","Load it if shallow range feels solid."]],
+      [["Cable chest fly","12","Isolation — mind-muscle connection. Feel the chest."],["Assisted pull-up, less assistance","8-10","Reduce the counterweight vs week 1."],["EZ bar curl","10","Both arms, full range, controlled."]],
+      [["Chest press machine, heavy","10","Machine safety with peak-week load — best weight here."],["Single-arm DB row, heavy","10/side","Brace hard. Best row weight yet."],["Triceps pushdown, heavy","12","Full extension each rep."]],
+    ],
+    ab:["Hanging knee raise or lying leg raise","12","Control the descent — no swinging."],
+  },
+  {
+    id:"w3d3",week:3,dayNum:3,title:"Conditioning Circuit",subtitle:"Cardio-strength blend",
+    focus:"No rest between exercises, only between rounds. Heart rate stays up the whole time. This is supposed to be uncomfortable — lean into it.",
+    warmup:"Stair stepper, brisk pace — 10 min. This is your warmup AND your conditioning mindset setter.",
+    stretches:["90/90 hip stretch, 30 sec/side","Pigeon stretch, 30-45 sec/side","Lying spinal twist, 30 sec/side","Doorway chest stretch (light), 30 sec","Calf stretch, 30 sec/side","Child's pose with lateral reach, 45 sec","Standing side bend, 5/side","Neck rolls + shoulder rolls, 10 each way"],
+    rounds:[
+      [["Goblet squat","15","Light weight, fast pace — keep moving."],["Renegade row (light DB)","8/side","Plank position, alternate rows — core works overtime."],["Low box step-up, fast","10/leg","Bodyweight, keep moving, low box only."]],
+      [["DB swing (or cable pull-through)","15","Hinge and drive — posterior chain cardio."],["Push-up","12","Full pace. Incline if shoulder needs it."],["Fast cable row","20 sec","Explosive and continuous — high rep light weight."]],
+      [["Lateral band walk","15/side","Stay low, don't rest at the top."],["TRX or ring row","12","Pull fast, lower slow."],["Mountain climber","20 total","Controlled — don't let hips pike up."]],
+    ],
+    ab:["Plank to downdog","10","Plank position, push hips up into downdog, return — flowing movement."],
+  },
+  {
+    id:"w3d4",week:3,dayNum:4,title:"Lower Body Peak",subtitle:"Glutes & legs loaded",
+    focus:"Heaviest lower body session of the block. Knee stays bilateral — everything else gets pushed to its limit today.",
+    warmup:"Rowing machine — 10 min. Full drive, prep the posterior chain for what's coming.",
+    stretches:["Supine knee-to-chest pull, 30 sec/side","Lying hamstring stretch with strap, 30 sec/side","Seated forward fold, 45 sec","Cobra stretch, 3 x 20 sec","Glute bridge hold, 3 x 20 sec","Hip flexor kneeling stretch, 30 sec/side","Thoracic extension over foam roller, 60 sec","Doorway pec stretch (low), 20 sec/side"],
+    rounds:[
+      [["Hip thrust, heaviest yet","8","Full extension, controlled eccentric. Best weight of the program."],["Leg press, heavy","10","Slow down, drive up hard."],["Romanian deadlift, heavy","8","Best hinge weight of the 4 weeks."]],
+      [["Goblet squat, heavy","8","Box squat depth — load it. Right knee stays tracked."],["Seated leg curl","10","Add a plate vs week 2. Slow return."],["Standing calf raise","15","Bilateral — load up the calves."]],
+      [["Cable pull-through","12","Hinge and drive, glute focus."],["Glute bridge, banded + heavy","12","Band above knees adds abductor challenge."],["Reverse lunge (light DB)","8/leg","Step back only — reduces right knee shear vs forward lunge."]],
+    ],
+    ab:["Pallof press, heavy band","10/side","Full pause at extension — make it genuinely resist you."],
+  },
+
+  // ── WEEK 4 — Deload & Finish ────────────────────────────────────────
+  {
+    id:"w4d1",week:4,dayNum:1,title:"Deload Full Body",subtitle:"Quality over quantity",
+    focus:"Week 4: intentional deload. Drop weight 15-20%, keep all the reps. Three hard weeks need a recovery week to actually become fitness — this is part of the program, not skipping it.",
+    warmup:"Incline treadmill walk (brisk) — 10 min. Enjoy it.",
+    stretches:["Cat-cow, 10 reps","World's greatest stretch, 5/side","Hip flexor lunge stretch, 30 sec/side","Standing quad stretch, 30 sec/side","Cross-body shoulder stretch (left gentle), 30 sec","Thread the needle, 5/side","Standing forward fold, 30-45 sec","Banded shoulder dislocates, 15 reps (left light)"],
+    rounds:[
+      [["Goblet squat, moderate","10","Back to week 1 feel — crisp and deliberate."],["Seated cable row","10","Full squeeze, unhurried. Feel every rep."],["DB floor press","10","Easy on the shoulder, solid chest work."]],
+      [["Romanian deadlift","10","Smooth hinge, no grinding."],["Lat pulldown","10","Controlled pull and return."],["Hip thrust, moderate","12","Full extension — deload doesn't mean checked out."]],
+      [["Leg press, moderate","10","Nice and controlled. 3 sec eccentric."],["Face pull","15","High rep shoulder health. This is maintenance work."],["Farmer's carry","40 sec","Spine neutral, shoulders packed."]],
+    ],
+    ab:["Bird dog","10/side","Perfect reps — deload week is form week."],
+  },
+  {
+    id:"w4d2",week:4,dayNum:2,title:"Upper Body Flow",subtitle:"Pump & feel good",
+    focus:"Lighter loads, higher reps, good pump. Deload week upper body — feel the muscle working, not the weight moving. This session should feel almost enjoyable.",
+    warmup:"Elliptical, moderate resistance, full stride — 10 min.",
+    stretches:["Arm circles forward + back, 15 each","Banded external rotation (light), 15 reps","Wall slides, 10 slow reps","Cross-body shoulder stretch, 30 sec/side","Chest opener — hands clasped behind back, 30 sec","Seated spinal rotation, 5/side","Wrist circles + forearm stretch, 30 sec each","Child's pose, 45 sec"],
+    rounds:[
+      [["Cable chest fly","12","Light, full squeeze — feel the chest throughout."],["Cable face pull","15","Shoulder health, high rep."],["Bicep curl","12","Full range, slow eccentric — earn the pump."]],
+      [["Incline DB press, light","12","Controlled. Whatever weight feels comfortable and clean."],["Single-arm DB row","12/side","Full range, unhurried."],["Hammer curl","12","Both arms."]],
+      [["Push-up","12","Standard or incline — whatever feels right today."],["Band pull-apart","20","High rep upper back. Squeeze at the back."],["Triceps rope pushdown","15","Light, full extension, squeeze."]],
+    ],
+    ab:["Side plank","30 sec/side","Controlled, no hip sag. Last side plank of the block."],
+  },
+  {
+    id:"w4d3",week:4,dayNum:3,title:"Mobility & Strength",subtitle:"Stretch-strength blend",
+    focus:"Strength-mobility blend at deload pace. Extra rest between rounds, extra time in the stretches. Your body is rebuilding — give it room to do that before the finisher.",
+    warmup:"Stair stepper, easy-moderate pace — 10 min. Recovery day energy.",
+    stretches:["90/90 hip stretch, 30 sec/side","Pigeon stretch, 30-45 sec/side","Lying spinal twist, 30 sec/side","Doorway chest stretch (light), 30 sec","Calf stretch, 30 sec/side","Child's pose with lateral reach, 45 sec","Standing side bend, 5/side","Neck rolls + shoulder rolls, 10 each way"],
+    rounds:[
+      [["Hip 90/90 transition (mobility)","5/side","Move through the position — not just hold it."],["Glute bridge, moderate","15","High rep, feel the glutes. This is the work."],["Pigeon pose hold","45 sec/side","This is your round rest — hold it well."]],
+      [["World's greatest stretch into T-spine rotation","5/side","Slow and deliberate, full range."],["Goblet squat, light + long pause","10","3 sec pause at bottom — hip opener and quad work combined."],["Child's pose lateral reach","45 sec/side","Let the lats open. Breathe into the stretch."]],
+      [["Leg press, light + slow","10","5 sec eccentric — time under tension is the point."],["Seated cable row, light + slow","10","4 sec return. Control."],["Dead bug","10/side","Best set of the program — slow, perfect, deliberate."]],
+    ],
+    ab:["Hollow body hold","25-30 sec","Last hollow body. Make it count."],
+  },
+  {
+    id:"w4d4",week:4,dayNum:4,title:"Program Finisher",subtitle:"Best of the block",
+    focus:"Final session. Pick your best weights from the past 4 weeks on each lift. Finish clean. You've built toward this.",
+    warmup:"Incline treadmill walk + 2 min stair stepper — 10 min. Get the heart rate up. This is the last one.",
+    stretches:["Walking knee hugs, 10 steps","Walking quad pulls, 10 steps","Leg swings front-to-back, 10/side","Leg swings side-to-side, 10/side","Hip circles, 10/direction","Inchworm walkout, 5 reps","Lat stretch on rack, 30 sec/side","Seated figure-4 glute stretch, 30 sec/side"],
+    rounds:[
+      [["Hip thrust, peak weight","10","Best of the program. Go for it."],["Incline DB press, best weight","10","Controlled, confident."],["Weighted pull-up or heavy lat pulldown","8","Finish the pull work strong."]],
+      [["Romanian deadlift, strong weight","10","Crisp hinge, flat back. Best version of this lift."],["Cable chest fly","12","Mind-muscle — feel the chest working."],["Single-arm DB row, heavy","10/side","Best row of the block. Brace and pull."]],
+      [["Leg press, strong weight","10","One more good set. Controlled down, drive up."],["Cable face pull","15","Shoulder health — always, every week, forever."],["Farmer's carry, heavy","45 sec","Last carry. Own it."]],
+    ],
+    ab:["Ab wheel rollout","10","End on something hard. You've earned it."],
+  },
+];
+
+const PROGRESS_KEY = "workout-progress-v2";
+const CHECKS_PREFIX = "workout-checks-v2:";
+function getProgress(){const v=localStorage.getItem(PROGRESS_KEY);const i=v?parseInt(v,10):0;return(!isNaN(i)&&i>=0&&i<W.length)?i:0;}
+function saveProgress(i){localStorage.setItem(PROGRESS_KEY,String(i));}
+function getChecks(id){const v=localStorage.getItem(CHECKS_PREFIX+id);return v?JSON.parse(v):{};}
+function saveChecks(id,c){localStorage.setItem(CHECKS_PREFIX+id,JSON.stringify(c));}
+
+let idx=getProgress(), checks=getChecks(W[idx].id), navOpen=false;
+
+const I={
+  flame:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+  wind:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>',
+  dumbbell:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6.5 6.5 11 11M21 21l-1-1M3 3l1 1m5.5 1.5-4 4m11 5-4 4M14 5l5 5M5 14l5 5M9.5 9.5l5 5"/></svg>',
+  check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0E1116" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>',
+  cl:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>',
+  cr:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>',
+};
+
+function render(){
+  const d=W[idx];
+  const total=d.rounds.reduce((a,r)=>a+r.length,0)+1;
+  const done=Object.values(checks).filter(Boolean).length;
+  const pct=Math.round((done/total)*100);
+  document.getElementById("app").innerHTML=`
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Week ${d.week} · Day ${d.dayNum}</div>
+          <div class="title">${d.title}${d.subtitle?` <span class="subtitle">· ${d.subtitle}</span>`:""}</div>
+        </div>
+        <button class="all-days-btn" id="adb">ALL DAYS</button>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="progress-label">${done}/${total} done</div>
+    </div>
+    <div class="focus-note">${d.focus}</div>
+    <div class="section">
+      <div class="section-head"><span class="section-icon">${I.flame}</span><span class="section-label">Warmup</span><span class="section-sub">· 10 min</span></div>
+      <div class="warmup-text">${d.warmup}</div>
+    </div>
+    <div class="section">
+      <div class="section-head"><span class="section-icon">${I.wind}</span><span class="section-label">Stretch</span><span class="section-sub">· 12-15 min</span></div>
+      <ul class="stretch-list">${d.stretches.map(s=>`<li>${s}</li>`).join("")}</ul>
+    </div>
+    <div class="section">
+      <div class="section-head"><span class="section-icon">${I.dumbbell}</span><span class="section-label">Strength</span><span class="section-sub">· 30-35 min · 3 rounds</span></div>
+      ${d.rounds.map((round,ri)=>{
+        const last=ri===d.rounds.length-1;
+        const exs=last?[...round,d.ab]:round;
+        return`<div class="round-block"><div class="round-label">ROUND ${ri+1}</div><div class="ex-list">${exs.map((ex,ei)=>{
+          const k=`${ri}-${ei}`,chk=!!checks[k];
+          return`<button class="ex-item${chk?" checked":""}" data-key="${k}">
+            <div class="ex-check">${I.check}</div>
+            <div class="ex-body"><div class="ex-top"><div class="ex-name">${ex[0]}</div><div class="ex-reps">${ex[1]}</div></div><div class="ex-note">${ex[2]}</div></div>
+          </button>`;
+        }).join("")}</div></div>`;
+      }).join("")}
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-btn" id="pb" ${idx===0?"disabled":""}>${I.cl} Prev</button>
+      <button class="nav-btn primary" id="nb" ${idx===W.length-1?"disabled":""}>Next Day ${I.cr}</button>
+    </div>
+    <div class="overlay${navOpen?" open":""}" id="ov">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">4-Week Program</div>
+        ${[1,2,3,4].map(wk=>`<div class="week-block"><div class="week-label">WEEK ${wk}</div><div class="day-grid">${W.filter(p=>p.week===wk).map(p=>{const i2=W.indexOf(p);return`<button class="day-card${i2===idx?" current":""}" data-idx="${i2}"><div class="day-card-label">DAY ${p.dayNum}</div><div class="day-card-title">${p.title}</div></button>`;}).join("")}</div></div>`).join("")}
+      </div>
+    </div>`;
+  document.querySelectorAll(".ex-item").forEach(b=>{b.addEventListener("click",()=>{const k=b.dataset.key;checks[k]=!checks[k];saveChecks(W[idx].id,checks);render();});});
+  document.getElementById("pb").addEventListener("click",()=>go(idx-1));
+  document.getElementById("nb").addEventListener("click",()=>go(idx+1));
+  document.getElementById("adb").addEventListener("click",()=>{navOpen=true;render();});
+  document.getElementById("ov").addEventListener("click",e=>{if(e.target.id==="ov"){navOpen=false;render();}});
+  document.querySelectorAll(".day-card").forEach(b=>{b.addEventListener("click",()=>go(parseInt(b.dataset.idx,10)));});
+}
+
+function go(i){if(i<0||i>=W.length)return;idx=i;saveProgress(i);checks=getChecks(W[idx].id);navOpen=false;window.scrollTo({top:0,behavior:"auto"});render();}
+render();
+</script>
+</body>
+</html>
